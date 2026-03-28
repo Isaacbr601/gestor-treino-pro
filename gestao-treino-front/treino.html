@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestor de Treino Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #121212; color: white; font-family: sans-serif; }
+        .card { background-color: #1E1E1E; border-radius: 12px; border: 1px solid #333; }
+        input { outline: none; transition: 0.2s; }
+        input:focus { border-color: #ef4444; }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 flex items-center">🏋️ GESTOR DE TREINO PRO</h1>
+
+        <div class="card p-6 mb-8">
+            <h2 id="titulo-form" class="text-xl mb-4 text-zinc-400">Registrar Novo Exercício</h2>
+            <div class="grid grid-cols-4 gap-4 mb-4">
+                <input id="ex" type="text" placeholder="Exercício" class="bg-zinc-800 p-2 rounded border border-zinc-700">
+                <input id="peso" type="number" placeholder="Peso (kg)" class="bg-zinc-800 p-2 rounded border border-zinc-700">
+                <input id="series" type="number" placeholder="Séries" class="bg-zinc-800 p-2 rounded border border-zinc-700">
+                <input id="reps" type="number" placeholder="Reps" class="bg-zinc-800 p-2 rounded border border-zinc-700">
+            </div>
+            <button id="btn-salvar" onclick="salvar()" class="w-full bg-red-600 hover:bg-red-700 p-3 rounded font-bold uppercase transition">Salvar Treino</button>
+        </div>
+
+        <div class="card p-6">
+            <h2 class="text-xl mb-4 text-zinc-400">Registro de Treino de Hoje</h2>
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b border-zinc-700 text-zinc-500 uppercase text-xs">
+                        <th class="p-2 text-zinc-300">Exercício</th>
+                        <th class="text-zinc-300">Peso</th>
+                        <th class="text-zinc-300">Séries</th>
+                        <th class="text-zinc-300">Reps</th>
+                        <th class="text-zinc-300">Total</th>
+                        <th class="text-zinc-300 text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-corpo"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080/api/treinos';
+        let idAtual = null; // Armazena o ID quando estamos editando
+
+        async function carregar() {
+            const res = await fetch(API_URL);
+            const treinos = await res.json();
+            const corpo = document.getElementById('tabela-corpo');
+            corpo.innerHTML = treinos.map(t => `
+                <tr class="border-b border-zinc-800 hover:bg-zinc-900 transition">
+                    <td class="p-2 font-semibold text-zinc-200">${t.exercicio}</td>
+                    <td class="text-zinc-400">${t.carga}kg</td>
+                    <td class="text-zinc-400">${t.series}</td>
+                    <td class="text-zinc-400">${t.repeticoes}</td>
+                    <td class="text-green-500 font-bold">${t.volumeTotal}kg</td>
+                    <td class="py-2 text-center">
+                        <button onclick='prepararEdicao(${JSON.stringify(t)})' title="Editar" class="mr-3 opacity-70 hover:opacity-100">✏️</button>
+                        <button onclick="deletar(${t.id})" title="Excluir" class="opacity-70 hover:opacity-100">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Prepara os campos para editar em vez de criar novo
+        function prepararEdicao(treino) {
+            idAtual = treino.id; 
+            document.getElementById('ex').value = treino.exercicio;
+            document.getElementById('peso').value = treino.carga;
+            document.getElementById('series').value = treino.series;
+            document.getElementById('reps').value = treino.repeticoes;
+            
+            // Muda o visual para "Modo Edição"
+            document.getElementById('titulo-form').innerText = "Editando Exercício";
+            const btn = document.getElementById('btn-salvar');
+            btn.innerText = "Atualizar Treino";
+            btn.classList.replace('bg-red-600', 'bg-blue-600');
+            btn.classList.replace('hover:bg-red-700', 'hover:bg-blue-700');
+        }
+
+        async function salvar() {
+            const treino = {
+                id: idAtual, // O segredo: se tiver ID, o Java faz UPDATE automática
+                exercicio: document.getElementById('ex').value,
+                carga: document.getElementById('peso').value,
+                series: document.getElementById('series').value,
+                repeticoes: document.getElementById('reps').value
+            };
+
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(treino)
+            });
+
+            resetarFormulario();
+            carregar();
+        }
+
+        async function deletar(id) {
+            if(confirm("Deseja apagar esse registro?")) {
+                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                carregar();
+            }
+        }
+
+        function resetarFormulario() {
+            idAtual = null;
+            document.getElementById('ex').value = "";
+            document.getElementById('peso').value = "";
+            document.getElementById('series').value = "";
+            document.getElementById('reps').value = "";
+            
+            document.getElementById('titulo-form').innerText = "Registrar Novo Exercício";
+            const btn = document.getElementById('btn-salvar');
+            btn.innerText = "Salvar Treino";
+            btn.classList.add('bg-red-600');
+            btn.classList.remove('bg-blue-600');
+        }
+
+        carregar();
+    </script>
+</body>
+</html>
