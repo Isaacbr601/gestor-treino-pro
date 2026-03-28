@@ -46,7 +46,7 @@
 
     <script>
         const API_URL = 'http://localhost:8080/api/treinos';
-        let idAtual = null; // Armazena o ID quando estamos editando
+        let idAtual = null; 
 
         async function carregar() {
             const res = await fetch(API_URL);
@@ -67,7 +67,6 @@
             `).join('');
         }
 
-        // Prepara os campos para editar em vez de criar novo
         function prepararEdicao(treino) {
             idAtual = treino.id; 
             document.getElementById('ex').value = treino.exercicio;
@@ -75,7 +74,6 @@
             document.getElementById('series').value = treino.series;
             document.getElementById('reps').value = treino.repeticoes;
             
-            // Muda o visual para "Modo Edição"
             document.getElementById('titulo-form').innerText = "Editando Exercício";
             const btn = document.getElementById('btn-salvar');
             btn.innerText = "Atualizar Treino";
@@ -85,7 +83,7 @@
 
         async function salvar() {
             const treino = {
-                id: idAtual, // O segredo: se tiver ID, o Java faz UPDATE automática
+                id: idAtual, 
                 exercicio: document.getElementById('ex').value,
                 carga: document.getElementById('peso').value,
                 series: document.getElementById('series').value,
